@@ -26,6 +26,16 @@ extern int errno;
 uint32_t table[256];
 
 int main (int argc, char ** argv) {
+  
+  crc_model m = {
+    .width = 32,
+    .refl_in = 1,
+    .refl_out = 1,
+    .poly = 0x4C11DB7U,
+    .init = 0xFFFFFFFF,
+    .xor_out = 0xFFFFFFFF
+  };
+  
   int rev_poly = 0; //flags
   int rev_out = 0;
   int opt;
@@ -38,6 +48,7 @@ int main (int argc, char ** argv) {
   uint32_t width;
   
   char *endptr;
+  uint32_t _pnom;
   
   FILE *fd;
   int64_t file_size;
@@ -60,9 +71,9 @@ int main (int argc, char ** argv) {
       rev_out = 1;
       break;
     case 'R':
-      rev_poly = 1;
+      rev_poly = 1; //probably remove this, it's confusing
       break;
-    case 'p':
+    case 'p': //and this, just use model
       str = optarg;
       p_sat = 1;
       break;
@@ -89,13 +100,17 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Either -p or -m is required.\n");
     exit(EXIT_FAILURE);
   }
-  errno = 0;
-  unsigned long long pnom = strtoull(str, &endptr, 16);
-  if (errno != 0 || *endptr != '\0') { // != '\0' require a stricter parse
-    fprintf(stderr, "Expected a 32-bit hex number\n");
-    exit(EXIT_FAILURE);
+  if (p_sat) {
+    errno = 0;
+    unsigned long long pnom = strtoull(str, &endptr, 16);
+    if (errno != 0 || *endptr != '\0') { // != '\0' require a stricter parse
+      fprintf(stderr, "Expected a 32-bit hex number\n");
+      exit(EXIT_FAILURE);
+    }
+    _pnom = pnom;
+  } else if (m_sat) {
+    _pnom = m.poly;
   }
-  uint32_t _pnom = pnom;
   if (rev_poly) {
     _pnom = reverse(_pnom);
     printf("Polynomial as reflected: 0x%08X\n", _pnom);
@@ -121,7 +136,6 @@ int main (int argc, char ** argv) {
       fprintf(stderr, "Error finding file. realpath: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
-
     struct stat st;
     errno = 0;
     if (stat(path, &st) == 0) { //can set errno but quit later
@@ -136,6 +150,16 @@ int main (int argc, char ** argv) {
       fprintf(stderr, "Error opening file. fopen: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
+    
+    size_t buf_sz = file_size < READ_MAX ? file_size : READ_MAX;
+    rd_buf = malloc(buf_sz);
+    size_t read = fread(rd_buf, 1, buf_sz, fd);
+    if (read != buf_sz) {
+      fprintf(stderr, "Read: %d/%d bytes.\n", read, buf_sz);
+      exit(EXIT_FAILURE);
+    }
+    uint32_t crc = calc_crc(table, _pnom, rd_buf, read, &m);
+    printf("0x%08X\n", crc);
     fclose(fd);
   }
   return 0;

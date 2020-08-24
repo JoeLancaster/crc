@@ -42,3 +42,22 @@ void gen_table(uint32_t *t, uint32_t polynomial, int reversed) {
     t[i] = reversed ? reverse(b) : b;
   }
 }
+
+uint32_t calc_crc(uint32_t *table, uint32_t polynomial, uint8_t *data, size_t size, crc_model * m) {
+  uint32_t crc = m -> init;
+  size_t i;
+  for (i = 0; i < size; i++) {
+    uint8_t b = data[i];
+    if (m -> refl_in) {
+      b = reverse8(b);
+    }
+    crc = (crc ^ (b << (m -> width - 8)));
+    uint8_t ind = (crc >> (m -> width - 8));
+    crc = crc << 8;
+    crc = (crc ^ table[ind]);
+  }
+  if (m -> refl_out) {
+    crc = reverse(crc);
+  }
+  return crc ^ m -> xor_out;
+}
