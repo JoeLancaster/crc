@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#define M(X) (0x00000001 << (X))
+#include "crc.h"
+
 
 const char *usage = "crc -p X -[r|t]\n"
   "\tWhere X is a 32-bit hexadecimal number.\n"
@@ -17,49 +18,6 @@ const char *usage = "crc -p X -[r|t]\n"
 
 extern int errno;
 uint32_t table[256];
-
-uint32_t reverse(uint32_t n) {
-  uint32_t result, i;
-  for (i = 0, result = 0; i < 32; i++) {
-    if (n & M(i)) {
-      result |= M(31 - i);
-    }
-  }
-  return result;
-}
-
-uint8_t reverse8(uint8_t n) {
-  uint8_t result, i;
-  for (i = 0, result = 0; i < 8; i++) {
-    if (n & M(i)) {
-      result |= M(7 - i);
-    }
-  }
-  return result;
-}
-
-void gen_table(uint32_t *t, uint32_t polynomial, int reversed) {
-  uint16_t i;
-  for (i = 0; i < 256; i++) {
-    uint32_t b;
-    uint16_t i_r = reverse8((uint8_t)i);
-    if (reversed) {
-      b = (i_r << 24) & 0xFFFFFFFF;
-    } else {
-      b = (i << 24) & 0xFFFFFFFF;
-    }
-    uint8_t bit;
-    for (bit = 0; bit < 8; bit++) {
-      if ((b & M(31)) != 0) {
-	b <<= 1;
-	b ^= polynomial;
-      } else {
-	b <<= 1;
-      }
-    }
-    t[i] = reversed ? reverse(b) : b;
-  }
-}
 
 int main (int argc, char ** argv) {
   int rev_poly = 0;
@@ -109,7 +67,7 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Option -p is required.\n");
     exit(EXIT_FAILURE);
   }
-  errno = 0; 
+  errno = 0;
   unsigned long long pnom = strtoull(str, &endptr, 16);
   if (errno != 0 || *endptr != '\0') {
     fprintf(stderr, "Expected a 32-bit hex number\n");
