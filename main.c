@@ -26,7 +26,6 @@ extern int errno;
 uint32_t table[256];
 
 int main (int argc, char ** argv) {
-  
   crc_model m = {
     .width = 32,
     .refl_in = 1,
@@ -40,10 +39,12 @@ int main (int argc, char ** argv) {
   int rev_out = 0;
   int opt;
   int p_sat = 0;
-  int m_sat = 0;  
+  int m_sat = 0;
+  int M_sat = 0;
   int prnt_tab = 0;
   char *str = "";
   char *m_str = "";
+  char *M_str = "";
   char *w_str = "";
   uint32_t width;
   
@@ -59,7 +60,7 @@ int main (int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
   
-  while ((opt = getopt(argc, argv, "m:w:hrtRp:")) != -1) {
+  while ((opt = getopt(argc, argv, "M:m:w:hrtRp:")) != -1) {
     switch (opt) {
     case 't':
       prnt_tab = 1;
@@ -81,6 +82,9 @@ int main (int argc, char ** argv) {
       m_str = optarg;
       m_sat = 1;
       break;
+    case 'M':
+      M_str = optarg;
+      M_sat = 1;
     case 'w':
       w_str = optarg;
       break;
@@ -145,12 +149,11 @@ int main (int argc, char ** argv) {
       fprintf(stderr, "Error: Empty file.");
       exit(EXIT_FAILURE);
     }
-    fd = fopen(path, "rb"); //+ text mode?
+    fd = fopen(path, "rb");
     if (errno != 0) {
       fprintf(stderr, "Error opening file. fopen: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
-    
     size_t buf_sz = file_size < READ_MAX ? file_size : READ_MAX;
     rd_buf = malloc(buf_sz);
     size_t read = fread(rd_buf, 1, buf_sz, fd);
