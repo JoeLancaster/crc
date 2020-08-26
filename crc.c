@@ -1,65 +1,65 @@
 #include "crc.h"
-
 #include <stdio.h>
+#include <stdlib.h>
 
-uint32_t reverse(uint32_t n) {
-  uint32_t result, i;
-  for (i = 0, result = 0; i < 32; i++) {
+#define M(X) (0x00000001 << (X))
+#define WM(X) ( (1 << (X)) - 1) 
+
+uint64_t reverse (uint64_t n, int width) {
+  uint64_t result;
+  int i;
+  for (i = 0, result = 0; i < width; i++) {
     if (n & M(i)) {
-      result |= M(31 - i);
+      result |= M(width - i - 1);
     }
   }
   return result;
 }
 
-uint8_t reverse8(uint8_t n) {
-  uint8_t result, i;
-  for (i = 0, result = 0; i < 8; i++) {
-    if (n & M(i)) {
-      result |= M(7 - i);
-    }
-  }
-  return result;
-}
-
-void gen_table(uint32_t *t, uint32_t polynomial, int reversed) {
+void gen_table (uint64_t *t, int reversed, crc_model *m) {
+  int width = m -> width;
+  uint64_t polynomial = m -> poly;
+  const uint64_t wmb = width - 8;
+  uint64_t mask = 1;
+  mask = width == 64 ? ~0 : ((mask << width) - 1);
+  
   uint16_t i;
+  uint8_t bit;
   for (i = 0; i < 256; i++) {
-    uint32_t b;
-    uint16_t i_r = reverse8((uint8_t)i);
-    if (reversed) {
-      b = (i_r << 24) & 0xFFFFFFFF;
-    } else {
-      b = (i << 24) & 0xFFFFFFFF;
-    }
-    uint8_t bit;
+    
+    uint64_t b = ((reversed ? reverse(i, 8) : i) << wmb ) & mask;
+    
     for (bit = 0; bit < 8; bit++) {
-      if ((b & M(31)) != 0) {
-	b <<= 1;
-	b ^= polynomial;
-      } else {
-	b <<= 1;
+      uint64_t tmp = b & M(width - 1);
+      b = (b << 1) & mask;
+      if ((tmp & mask) != 0) {
+      	b ^= polynomial & mask;
       }
     }
-    t[i] = reversed ? reverse(b) : b;
+    t[i] = reversed ? reverse(b, width) : b;
   }
 }
 
-uint32_t calc_crc(uint32_t *table, uint32_t polynomial, uint8_t *data, size_t size, crc_model * m) {
-  uint32_t crc = m -> init;
+
+uint64_t calc_crc (uint64_t *table, uint8_t *data, size_t size, crc_model *m) {
+  uint64_t mask = 1;
+  mask = m -> width == 64 ? ~0 : ((mask << m -> width) - 1);
+  
+  uint64_t crc = m -> init;
   size_t i;
   for (i = 0; i < size; i++) {
     uint8_t b = data[i];
     if (m -> refl_in) {
-      b = reverse8(b);
+      b = reverse(b, 8);
     }
     crc = (crc ^ (b << (m -> width - 8)));
     uint8_t ind = (crc >> (m -> width - 8));
-    crc = crc << 8;
-    crc = (crc ^ table[ind]);
+    crc = (crc << 8) & mask;
+    crc = (crc ^ table[ind]) & mask;
   }
   if (m -> refl_out) {
-    crc = reverse(crc);
+    crc = reverse(crc, m -> width);
   }
-  return crc ^ m -> xor_out;
+  return (crc ^ m -> xor_out) & mask;
+
 }

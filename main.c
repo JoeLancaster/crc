@@ -26,7 +26,7 @@ const char *usage = "crc -p X -[r|t]\n"
   "\t-h: Print this message";
 
 extern int errno;
-uint32_t table[256];
+uint64_t table[256];
 
 int main (int argc, char ** argv) {
   crc_model m = {
@@ -53,7 +53,6 @@ int main (int argc, char ** argv) {
   
   char *endptr;
   uint32_t _pnom;
-
   char * rd_buf;
   char * model_buf;
     
@@ -119,10 +118,10 @@ int main (int argc, char ** argv) {
     _pnom = m.poly;
   }
   if (rev_poly) {
-    _pnom = reverse(_pnom);
+    _pnom = reverse(_pnom, 32);
     printf("Polynomial as reflected: 0x%08X\n", _pnom);
   }
-  gen_table(table, _pnom, rev_out);
+  gen_table(table, rev_out, &m);
   if (prnt_tab) {
     int i;
     for (i = 0; i < 256; i++) {
@@ -139,7 +138,7 @@ int main (int argc, char ** argv) {
 
     size_t read = dump_file(argv[optind], &rd_buf, READ_MAX);
     printf("read: %lu\n", read);
-    uint32_t crc = calc_crc(table, _pnom, rd_buf, read, &m);
+    uint32_t crc = calc_crc(table, rd_buf, read, &m);
     
     printf("0x%08X\n", crc);
 
