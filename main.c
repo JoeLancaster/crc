@@ -10,6 +10,8 @@
 #include <sys/types.h>
 
 #include "crc.h"
+#include "util.h"
+#include "model.h"
 
 #define READ_MAX 4096
 
@@ -19,6 +21,7 @@ const char *usage = "crc -p X -[r|t]\n"
   "\t-R: Reflect the input polynomial\n"
   "\t-t: Just print the calculated table\n"
   "\t-m: Use a standard CRC model\n"
+  "\t-M: Use a user-defined model from a file\n"
   "\t-w: Define the width of the polynomial\n"
   "\t-h: Print this message";
 
@@ -50,10 +53,9 @@ int main (int argc, char ** argv) {
   
   char *endptr;
   uint32_t _pnom;
-  
-  FILE *fd;
-  int64_t file_size;
+
   char * rd_buf;
+  char * model_buf;
     
   if (argc < 2) {
     puts(usage);
@@ -90,7 +92,7 @@ int main (int argc, char ** argv) {
       break;
     case '?':
       if (optopt == 'p' || optopt == 'm' || optopt == 'w') {
-	fprintf(stderr, "Option -%c requires a polynomial argument.\n", optopt);
+	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
       }
       else if (isprint(optopt)) {
 	fprintf(stderr, "Unkown option \'-%c\'.\nUse ./crc -h for help.\n", optopt);
@@ -100,18 +102,19 @@ int main (int argc, char ** argv) {
       abort();
     }    
   }
-  if ( (p_sat && m_sat) || !(p_sat || m_sat) ) {
-    fprintf(stderr, "Either -p or -m is required.\n");
+  if ( (M_sat && m_sat) || !(M_sat || m_sat) ) {
+    fprintf(stderr, "Either -M or -m is required.\n");
     exit(EXIT_FAILURE);
   }
-  if (p_sat) {
-    errno = 0;
-    unsigned long long pnom = strtoull(str, &endptr, 16);
-    if (errno != 0 || *endptr != '\0') { // != '\0' require a stricter parse
-      fprintf(stderr, "Expected a 32-bit hex number\n");
-      exit(EXIT_FAILURE);
-    }
-    _pnom = pnom;
+  if (M_sat) {
+    //open model file and parse
+    dump_file(M_str, &model_buf, READ_MAX);
+
+    parse_model(model_buf, &m);
+    
+    _pnom = m.poly; //change
+
+    free(model_buf);
   } else if (m_sat) {
     _pnom = m.poly;
   }
@@ -133,37 +136,13 @@ int main (int argc, char ** argv) {
       fprintf(stderr, "No file location provided!\n");
       exit(EXIT_FAILURE);
     }
-    char *path = malloc(PATH_MAX);
-    errno = 0;
-    realpath(argv[optind], path);
-    if (errno != 0) {
-      fprintf(stderr, "Error finding file. realpath: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-    struct stat st;
-    errno = 0;
-    if (stat(path, &st) == 0) { //can set errno but quit later
-      file_size = st.st_size;
-    }
-    if (errno == 0 && file_size == 0) {
-      fprintf(stderr, "Error: Empty file.");
-      exit(EXIT_FAILURE);
-    }
-    fd = fopen(path, "rb");
-    if (errno != 0) {
-      fprintf(stderr, "Error opening file. fopen: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-    size_t buf_sz = file_size < READ_MAX ? file_size : READ_MAX;
-    rd_buf = malloc(buf_sz);
-    size_t read = fread(rd_buf, 1, buf_sz, fd);
-    if (read != buf_sz) {
-      fprintf(stderr, "Read: %d/%d bytes.\n", read, buf_sz);
-      exit(EXIT_FAILURE);
-    }
+
+    size_t read = dump_file(argv[optind], &rd_buf, READ_MAX);
+    printf("read: %lu\n", read);
     uint32_t crc = calc_crc(table, _pnom, rd_buf, read, &m);
+    
     printf("0x%08X\n", crc);
-    fclose(fd);
+
   }
   return 0;
 }

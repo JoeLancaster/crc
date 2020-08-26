@@ -1,5 +1,7 @@
 #include "crc.h"
 
+#include <stdio.h>
+
 uint32_t reverse(uint32_t n) {
   uint32_t result, i;
   for (i = 0, result = 0; i < 32; i++) {

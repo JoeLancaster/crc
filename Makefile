@@ -1,5 +1,7 @@
+source = main.c model.c crc.c util.c
+
 default:
-	gcc -Wall -Wextra -Wpedantic -Werror -O2 main.c crc.c -o crc
-lax:
-	gcc -O2 main.c crc.c model.c -o crc
+	gcc -Wall -Wextra -Wpedantic -Werror -O2 $(source) -o crc
+debug:
+	gcc -g $(source) -o crc
 
