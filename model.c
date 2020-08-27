@@ -19,6 +19,8 @@
 #define NAME 64
 #define ALL (WIDTH | REFLIN | REFLOUT | POLY | INIT | XOROUT | NAME)
 
+#define BSTR(X) ((X) ? "True" : "False")
+
 extern int errno;
 
 int parse_bool (char *str) {
@@ -29,6 +31,30 @@ int parse_bool (char *str) {
     return 0;
   }
   return -1;
+}
+
+void print_model (crc_model *m, int v) {
+  char *s;
+  if (v) {
+    s = "Name: %s\n"
+      "Width (bits): %d\n"
+      "Polynomial: 0x%X\n"
+      "Initial Value: 0x%X\n"
+      "Final Xor: 0x%X\n"
+      "Reflected Input: %s\n"
+      "Reflected Output %s\n";
+  } else {
+    s = "name:%s, "
+      "width:%d, "
+      "poly:%d, "
+      "init:%d, "
+      "xorout:%d, "
+      "reflin:%s, "
+      "reflout:%s\n";
+  }
+  printf(s, "Name", m -> width, m -> poly,
+	 m -> init, m -> xor_out,
+	 BSTR(m -> refl_in), BSTR(m -> refl_out));
 }
 
 void parse_model(char *str, crc_model *m) { //str is one crc model in text format
