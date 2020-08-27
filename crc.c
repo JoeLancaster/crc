@@ -5,6 +5,12 @@
 #define M(X) (0x00000001 << (X))
 #define WM(X) ( (1 << (X)) - 1) 
 
+inline uint64_t make_mask (int width) {
+  uint64_t mask = 1;
+  mask = width == 64 ? (uint64_t)0xFFFFFFFFFFFFFFFF : ((mask << width) - 1);
+  return mask;
+}
+
 uint64_t reverse (uint64_t n, int width) {
   uint64_t result;
   int i;
@@ -20,8 +26,7 @@ void gen_table (uint64_t *t, int reversed, crc_model *m) {
   int width = m -> width;
   uint64_t polynomial = m -> poly;
   const uint64_t wmb = width - 8;
-  uint64_t mask = 1;
-  mask = width == 64 ? ~0 : ((mask << width) - 1);
+  uint64_t mask = make_mask(width);
   
   uint16_t i;
   uint8_t bit;
@@ -42,8 +47,7 @@ void gen_table (uint64_t *t, int reversed, crc_model *m) {
 
 
 uint64_t calc_crc (uint64_t *table, uint8_t *data, size_t size, crc_model *m) {
-  uint64_t mask = 1;
-  mask = m -> width == 64 ? ~0 : ((mask << m -> width) - 1);
+  uint64_t mask = make_mask(m -> width);
   
   uint64_t crc = m -> init;
   size_t i;

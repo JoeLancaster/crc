@@ -62,7 +62,7 @@ void parse_model(char *str, crc_model *m) { //str is one crc model in text forma
   int sat = 0;
   token = strtok(str, "\n");
   while (token != NULL) {
-    int i;
+    size_t i;
     for (i = 0; i < strlen(token); i++) {
       token[i] = toupper(token[i]);
     }
@@ -89,7 +89,6 @@ int match_tok (char *str, crc_model *m) {
   char val[TOK_SZ];
   int i = 0;
   int j = 0;
-  int off = 0;
   while (str[i] != ':') {
     key[i] = str[i];
     i++;

@@ -4,13 +4,21 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include "util.h"
 
-size_t dump_file (char *arg_path, char **buf, const size_t READ_MAX) {
+void print_hex (int width, uint64_t number) {
+  int leadingz = width / 4 + (width % 4 != 0);
+  printf("0x%0*" PRIX64, leadingz, number);
+}
+
+size_t dump_file (char *arg_path, uint8_t **buf, const size_t READ_MAX) {
   struct stat st;
   char * path = malloc(PATH_MAX);
-  int64_t file_size = 0;
+  size_t file_size = 0;
   FILE * fd;
   errno = 0;
   realpath(arg_path, path);
@@ -35,7 +43,7 @@ size_t dump_file (char *arg_path, char **buf, const size_t READ_MAX) {
   *buf = malloc(buf_sz);
   size_t read = fread(*buf, 1, buf_sz, fd);
   if (read != buf_sz) {
-    fprintf(stderr, "Read: %d/%d bytes.\n", read, buf_sz);
+    fprintf(stderr, "Read: %zu/%zu bytes.\n", read, buf_sz);
     exit(EXIT_FAILURE);
   }
   fclose(fd);
