@@ -5,7 +5,7 @@
 #define M(X) (0x00000001 << (X))
 #define WM(X) ( (1 << (X)) - 1) 
 
-inline uint64_t make_mask (int width) {
+uint64_t make_mask (int width) {
   uint64_t mask = 1;
   mask = width == 64 ? (uint64_t)0xFFFFFFFFFFFFFFFF : ((mask << width) - 1);
   return mask;

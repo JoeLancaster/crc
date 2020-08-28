@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "util.h"
 #include "model.h"
 
 #define TOK_SZ 64
@@ -22,6 +23,11 @@
 #define BSTR(X) ((X) ? "True" : "False")
 
 extern int errno;
+
+int match_model (char * name) {
+  //if no match ret -1
+  return (int)name[0];//suppress warnings while WIP
+}
 
 int parse_bool (char *str) {
   if (!strcmp(str, "TRUE")) {
@@ -57,15 +63,14 @@ void print_model (crc_model *m, int v) {
 	 BSTR(m -> refl_in), BSTR(m -> refl_out));
 }
 
+
+
 void parse_model(char *str, crc_model *m) { //str is one crc model in text format
   char *token;
   int sat = 0;
   token = strtok(str, "\n");
   while (token != NULL) {
-    size_t i;
-    for (i = 0; i < strlen(token); i++) {
-      token[i] = toupper(token[i]);
-    }
+    strupper(token);
     if (strcmp(token, "") != 0) { //ignore empty lines
       int r = match_tok(token, m);
       if (r < 0) {

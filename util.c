@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "util.h"
 
@@ -47,5 +48,14 @@ size_t dump_file (char *arg_path, uint8_t **buf, const size_t READ_MAX) {
     exit(EXIT_FAILURE);
   }
   fclose(fd);
+  free(path);
   return read;
+}
+
+void strupper (char * s) {
+  size_t i;
+  for (i = 0; i < strlen(s); i++) {
+    s[i] = toupper(s[i]);
+  }
+  return;
 }

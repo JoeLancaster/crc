@@ -15,9 +15,10 @@ typedef struct {
   char name[MOD_NAME_SZ];
 } crc_model;
 
-void print_model(crc_model *, int);
+int match_model (char *);
+void print_model (crc_model *, int);
 int parse_bool (char *);
 int match_tok (char *, crc_model *);
-void parse_model(char *, crc_model *);
+void parse_model (char *, crc_model *);
 
 #endif

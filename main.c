@@ -15,15 +15,13 @@
 
 #define READ_MAX 4096
 
-const char *usage = "usage: crc -[m|M] [OPTIONS]\n"
-  "\t-m: Use a standard CRC model. See -h models for a list of models\n"
-  "\t-M: Use a user-defined model from a file\n"
-  "\n"
+const char *usage = "usage: crc -m [OPTIONS]\n"
+  "\t-m: Specify a model through either a file or the name of a built-in model\n"
+  "\t    See -h models for a list of models or -h syntax for help creating a model file\n"
   "\t-t: Just print the calculated table\n"
   "\t-r: Use with -t. Print the reflected table\n"
   "\t-h: Print this message";
 
-extern int errno;
 uint64_t table[256];
 
 int main (int argc, char ** argv) {
@@ -40,20 +38,20 @@ int main (int argc, char ** argv) {
   int rev_out = 0;
   int opt;
   int m_sat = 0;
-  int M_sat = 0;
   int prnt_tab = 0;
   char *m_str = "";
-  char *M_str = "";
 
   uint8_t * rd_buf;
   uint8_t * model_buf;
-    
+
+  char * path;
+  
   if (argc < 2) {
     puts(usage);
     exit(EXIT_FAILURE);
   }
   
-  while ((opt = getopt(argc, argv, "M:m:hrt")) != -1) {
+  while ((opt = getopt(argc, argv, "m:hrt")) != -1) {
     switch (opt) {
     case 't':
       prnt_tab = 1;
@@ -68,38 +66,47 @@ int main (int argc, char ** argv) {
       m_str = optarg;
       m_sat = 1;
       break;
-    case 'M':
-      M_str = optarg;
-      M_sat = 1;
-      break;
     case '?':
       if (optopt == 'm') {
-	fprintf(stderr, "-m requires a model argument. For a list of models see -h models.");
-      } else if (optopt == 'M') {
-	fprintf(stderr, "-M requires a path to a model file. For help with syntax see -h syntax");
-      }
+	fprintf(stderr, "-m requires either a model file or the name of a built-in model. For a list of models see -h models.");
       exit(EXIT_FAILURE);
+      }
       break;
     default:
       abort();
     }    
   }
-  if ( (M_sat && m_sat) || !(M_sat || m_sat) ) {
-    fprintf(stderr, "Either -M or -m is required.\n");
+  if (!m_sat) {
+    fprintf(stderr, "Option -m is required.\n");
     exit(EXIT_FAILURE);
   }
-  if (M_sat) {
-    dump_file(M_str, &model_buf, READ_MAX);
 
+  path = malloc (PATH_MAX);
+  errno = 0;
+  realpath(m_str, path);
+  int eval = errno;
+  if (eval == 0) {
+    dump_file(path, &model_buf, READ_MAX);
     parse_model((char *)model_buf, &m);
-   
-
     free(model_buf);
-  } else if (m_sat) {
-    //use m
+  } else if (eval != ENOENT) { //file exists but another error happened
+    fprintf(stderr, "Error finding file: %s. realpath: %s\n", m_str, strerror(eval));
+    exit(EXIT_FAILURE);
+  } else { //file doesn't exist, check for matching model name or number
+    char model_name[strlen(m_str)];
+    int match;
+    strcpy(model_name, m_str);
+    strupper(model_name);
+    if ( (match = match_model(model_name)) != -1 ) {
+      //m = models[match];
+    } else {
+      fprintf(stderr, "%s is neither a file or a built-in model.\n", m_str);
+      exit(EXIT_FAILURE);
+    }
   }
+  
   gen_table(table, rev_out, &m);
-  print_model(&m, 1);
+
   if (prnt_tab) {
     int i;
     for (i = 0; i < 256; i++) {
@@ -116,10 +123,9 @@ int main (int argc, char ** argv) {
     }
 
     size_t read = dump_file(argv[optind], &rd_buf, READ_MAX);
-    printf("read: %lu\n", read);
     uint32_t crc = calc_crc(table, rd_buf, read, &m);
     
-    printf("0x%08X\n", crc);
+    print_hex(m.width, crc);
 
   }
   return 0;
