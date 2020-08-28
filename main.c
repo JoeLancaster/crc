@@ -105,7 +105,7 @@ int main (int argc, char ** argv) {
     }
   }
   
-  gen_table(table, rev_out, &m);
+  gen_table(table, (prnt_tab && rev_out), &m); //dont use reversed table in calculations
 
   if (prnt_tab) {
     int i;
