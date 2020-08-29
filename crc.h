@@ -9,6 +9,7 @@
 uint64_t reverse (uint64_t,  int);
 //reverse8
 void gen_table (uint64_t *, int, crc_model *);
-uint64_t calc_crc(uint64_t *, uint8_t *, size_t, crc_model *);
+uint64_t calc_crc (uint64_t *, uint8_t *, size_t, crc_model *);
+uint64_t make_mask (int);
 
 #endif

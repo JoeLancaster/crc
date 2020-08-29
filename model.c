@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "crc.h"
 #include "util.h"
 #include "model.h"
 
@@ -83,6 +84,10 @@ void parse_model(char *str, crc_model *m) { //str is one crc model in text forma
   }
   if (sat != ALL) {
     fprintf(stderr, "Error when parsing model: a field is missing.\nsat: %d all: %d\n", sat, ALL);
+    exit(EXIT_FAILURE);
+  }
+  if (m -> poly > make_mask(m -> width)  ) {
+    fprintf(stderr, "Error: Polynomial is too large to fit in %d bits\n", m -> width);
     exit(EXIT_FAILURE);
   }
 }
