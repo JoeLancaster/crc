@@ -30,7 +30,7 @@ uint64_t reverse (uint64_t n, int width) {
 void gen_table (uint64_t *t, int reversed, crc_model *m) {
   int width = m -> width;
   uint64_t polynomial = m -> poly;
-  const uint64_t wmb = width - 8;
+  const uint64_t wmb = width - 8 ;
   uint64_t mask = make_mask(width);
   
   uint16_t i;

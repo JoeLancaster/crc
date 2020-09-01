@@ -86,8 +86,21 @@ void parse_model(char *str, crc_model *m) { //str is one crc model in text forma
     fprintf(stderr, "Error when parsing model: a field is missing.\n");
     exit(EXIT_FAILURE);
   }
-  if (m -> poly > make_mask(m -> width)  ) {
+  if (m -> width == 0) {
+    fprintf(stderr, "Error: model width is zero.\n");
+    exit(EXIT_FAILURE);
+  }
+  const uint64_t width_max = make_mask(m -> width);
+  if (m -> poly > width_max) {
     fprintf(stderr, "Error: Polynomial is too large to fit in %d bits\n", m -> width);
+    exit(EXIT_FAILURE);
+  }
+  if (m -> init > width_max) {
+    fprintf(stderr, "Error: Initial value is too large to fit in %d bits\n", m -> width);
+    exit(EXIT_FAILURE);
+  }
+  if (m -> xor_out > width_max) {
+    fprintf(stderr, "Error: Xor out value is too large to fit in %d bits\n", m -> width);
     exit(EXIT_FAILURE);
   }
 }
