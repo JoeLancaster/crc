@@ -82,11 +82,16 @@ int main (int argc, char ** argv) {
   }
 
   path = malloc (PATH_MAX);
+  if (!path) {
+    fprintf(stderr, "malloc error\n");
+    exit(EXIT_FAILURE);
+  }
   errno = 0;
   realpath(m_str, path);
   int eval = errno;
   if (eval == 0) {
     dump_file(path, &model_buf, READ_MAX);
+    free(path);
     parse_model((char *)model_buf, &m);
     free(model_buf);
   } else if (eval != ENOENT) { //file exists but another error happened

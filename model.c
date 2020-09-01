@@ -83,7 +83,7 @@ void parse_model(char *str, crc_model *m) { //str is one crc model in text forma
     token = strtok(NULL, "\n");
   }
   if (sat != ALL) {
-    fprintf(stderr, "Error when parsing model: a field is missing.\nsat: %d all: %d\n", sat, ALL);
+    fprintf(stderr, "Error when parsing model: a field is missing.\n", sat, ALL);
     exit(EXIT_FAILURE);
   }
   if (m -> poly > make_mask(m -> width)  ) {
