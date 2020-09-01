@@ -41,7 +41,7 @@ size_t dump_file (char *arg_path, uint8_t **buf, const size_t READ_MAX) {
     exit(EXIT_FAILURE);
   }
   size_t buf_sz = file_size < READ_MAX ? file_size : READ_MAX;
-  *buf = calloc(sizeof(char), buf_sz + 1); //let the buffer be zeroed and +1 so the buffer (now string) is null-terminated
+  *buf = calloc(sizeof(uint8_t), buf_sz + 1); //let the buffer be zeroed and +1 so the buffer (now string) is null-terminated
   if (!(*buf)) {
     fprintf(stderr, "malloc error\n");
     exit(EXIT_FAILURE);

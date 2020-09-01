@@ -2,8 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define M(X) (0x00000001 << (X))
-#define WM(X) ( (1 << (X)) - 1) 
+//#define M(X) (0x00000001 << (X))
+//#define WM(X) ( (1 << (X)) - 1) 
+
+uint64_t M (uint64_t by) {
+  uint64_t one = 1;
+  return one << by;
+}
 
 uint64_t make_mask (int width) {
   uint64_t mask = 1;
